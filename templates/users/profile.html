@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel profile-header">
+    <div class="profile-avatar">
+        {% if profile_user.profile_picture %}
+            <img src="{{ profile_user.profile_picture.url }}" alt="Profile">
+        {% else %}
+            <i class="fa-solid fa-user"></i>
+        {% endif %}
+    </div>
+    <div class="profile-info">
+        <h1>{{ profile_user.username }}</h1>
+        <div class="profile-bio">{{ profile_user.bio|default:"No bio yet." }}</div>
+        
+        <div class="profile-stats">
+            <div><span>{{ profile_user.posts.count }}</span> Posts</div>
+            <div><span>{{ profile_user.followers.count }}</span> Followers</div>
+            <div><span>{{ profile_user.following.count }}</span> Following</div>
+        </div>
+        
+        {% if user.is_authenticated and user != profile_user %}
+            <form action="{% url 'toggle_follow' profile_user.username %}" method="post" style="margin-top: 1rem;">
+                {% csrf_token %}
+                {% if is_following %}
+                    <button type="submit" class="btn btn-outline">Unfollow</button>
+                {% else %}
+                    <button type="submit" class="btn primary-btn">Follow</button>
+                {% endif %}
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<h3 style="margin-bottom: 1.5rem; font-weight: 600;">Posts</h3>
+
+<div class="feed-posts">
+    {% for post in posts %}
+        <div class="glass-panel post-card">
+            <div class="post-header">
+                <div class="profile-avatar" style="width: 40px; height: 40px; margin-right: 1rem; font-size: 1rem;">
+                    {% if post.author.profile_picture %}
+                        <img src="{{ post.author.profile_picture.url }}" alt="Profile">
+                    {% else %}
+                        <i class="fa-solid fa-user"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="post-author">{{ post.author.username }}</span>
+                    <div class="post-date">{{ post.created_at|timesince }} ago</div>
+                </div>
+            </div>
+            
+            <div class="post-content">
+                {{ post.content|linebreaks }}
+            </div>
+            
+            <div class="post-footer">
+                <form action="{% url 'toggle_like' post.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn {% for like in post.likes.all %}{% if like.user == request.user %}liked{% endif %}{% endfor %}">
+                        <i class="fa-solid fa-heart"></i> {{ post.likes.count }} Likes
+                    </button>
+                </form>
+                <div class="action-btn" style="cursor: default;">
+                    <i class="fa-solid fa-comment"></i> {{ post.comments.count }} Comments
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="glass-panel" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+            <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <h3>No posts yet.</h3>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
