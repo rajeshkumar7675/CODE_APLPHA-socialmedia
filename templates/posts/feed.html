@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel create-post">
+    <form method="post" action="{% url 'feed' %}">
+        {% csrf_token %}
+        {{ form.content }}
+        <div class="post-action">
+            <button type="submit" class="btn primary-btn"><i class="fa-solid fa-paper-plane"></i> Post</button>
+        </div>
+    </form>
+</div>
+
+<div class="feed-posts">
+    {% for post in posts %}
+        <div class="glass-panel post-card">
+            <div class="post-header">
+                <div class="profile-avatar" style="width: 40px; height: 40px; margin-right: 1rem; font-size: 1rem;">
+                    {% if post.author.profile_picture %}
+                        <img src="{{ post.author.profile_picture.url }}" alt="Profile">
+                    {% else %}
+                        <i class="fa-solid fa-user"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="{% url 'profile' post.author.username %}" class="post-author">{{ post.author.username }}</a>
+                    <div class="post-date">{{ post.created_at|timesince }} ago</div>
+                </div>
+            </div>
+            
+            <div class="post-content">
+                {{ post.content|linebreaks }}
+            </div>
+            
+            <div class="post-footer">
+                <form action="{% url 'toggle_like' post.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn {% for like in post.likes.all %}{% if like.user == request.user %}liked{% endif %}{% endfor %}">
+                        <i class="fa-solid fa-heart"></i> {{ post.likes.count }} Likes
+                    </button>
+                </form>
+                <div class="action-btn" style="cursor: default;">
+                    <i class="fa-solid fa-comment"></i> {{ post.comments.count }} Comments
+                </div>
+            </div>
+
+            <div class="comments-section">
+                {% for comment in post.comments.all %}
+                    <div class="comment">
+                        <a href="{% url 'profile' comment.author.username %}" class="comment-author">{{ comment.author.username }}</a>
+                        <span>{{ comment.content }}</span>
+                    </div>
+                {% empty %}
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">No comments yet.</p>
+                {% endfor %}
+                
+                <form action="{% url 'add_comment' post.id %}" method="post" class="comment-form">
+                    {% csrf_token %}
+                    {{ comment_form.content }}
+                    <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div class="glass-panel" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+            <i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <h3>No posts yet. Follow some users or create your first post!</h3>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
